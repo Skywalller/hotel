@@ -16,6 +16,7 @@ body {
 :root {
   color-scheme: light;
   background-color: rgba(245, 222, 179, 0.05);
+  color: black;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
