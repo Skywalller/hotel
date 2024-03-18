@@ -32,7 +32,7 @@ const Admin = () => {
           </div>
         </div>
       </div>
-      <div className='ml-[335px] h-screen flex-1 rounded-l-2xl p-6'>
+      <div className='ml-[330px] min-h-screen w-[calc(100vw-330px)] p-4'>
         <Outlet />
       </div>
     </>

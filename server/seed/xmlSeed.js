@@ -145,11 +145,6 @@ const toggleAvailability = ({
   available = false,
 }) => {
   return `<?xml version="1.0" encoding="UTF-8"?>
-   <POS>
-    <Source>
-      <RequestorID ID="${PARTNER_KEY}"/>
-    </Source>
-  </POS>
 <OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05"
                        EchoToken="${generateId()}"
                        TimeStamp="${getTimestamp()}"
@@ -157,10 +152,10 @@ const toggleAvailability = ({
   <AvailStatusMessages HotelCode="${hotelId}">
     <AvailStatusMessage>
       <StatusApplicationControl Start="${startDate}"
-                                End="${endDate}"/>
+                                End="${endDate}"
                                 InvTypeCode="${roomId}"
                                 RatePlanCode="${packageId}"/>
-      <RestrictionStatus Status="${available ? "Open" : "Close"}" />
+      <RestrictionStatus Status="${available ? "Open" : "Close"}" Restriction="Master"/>
     </AvailStatusMessage>
   </AvailStatusMessages>
 </OTA_HotelAvailNotifRQ>

@@ -117,24 +117,14 @@ async function init() {
       const data = toggleAvailability({
         roomId: "65f76347ce6302dc2cfa8a79",
         startDate: date,
-        endDate: dayjs("2024-03-30").format("DD-MM-YYYY"),
+        endDate: dayjs("2024-03-20").format("DD-MM-YYYY"),
         packageId: "65f791097cc4234907d396bc",
-        // inventory: 1,
       });
-      const fetchOptions = {
-        headers: {
-          "Content-Type": "application/xml",
-        },
-        method: "POST",
-        body: data,
-      };
-      const response = await fetch(AVAILABILITY, fetchOptions);
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(response, "application/xml");
-      console.log(xmlDoc);
-      return res.json({ message: xmlDoc });
+      const response = await axios.post(AVAILABILITY, data, fetchOptions);
+      console.log(response.data);
+      return res.json({ message: response.status });
     } catch (error) {
-      return res.json({ error });
+      return res.json({ error: error.message });
     }
   });
 
