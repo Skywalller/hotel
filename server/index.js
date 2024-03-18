@@ -4,6 +4,12 @@ import axios from "axios";
 import connectDb from "./services/db.js";
 import Hotel from "./models/hotel.js";
 import Room from "./models/room.js";
+import generateId from "./utils/generateId.js";
+import { AVAILABILITY, INVENTORY, RATE, TRANSACTION } from "./seed/googleEndpoints.js";
+import getDate from "./utils/getTimestamp.js";
+import dayjs from "dayjs";
+import { addInventory, addRate, addRoom, toggleAvailability } from "./seed/xmlSeed.js";
+import Package from "./models/package.js";
 
 async function init() {
   const server = http.createServer(app);
@@ -35,34 +41,104 @@ async function init() {
 
   app.get("/", async (req, res) => {
     try {
-      const hotel = await Hotel.findById("65f752585a4280404ac0de2a");
-      const room = await Room.create({
-        name: "Deluxe Room",
-        price: 10.99,
+      const date = dayjs().format("DD-MM-YYYY");
+      console.log("Running ... ");
+      const data = addRate({
+        roomId: "65f76347ce6302dc2cfa8a79",
+        startDate: date,
+        endDate: dayjs("2024-03-30").format("DD-MM-YYYY"),
+        packageId: "65f791097cc4234907d396bc",
+        inventory: 1,
       });
-      hotel.rooms.push(room);
-      await hotel.save();
+      const res = await axios.post(RATE, data, fetchOptions);
+      return res.json({ message: "Success" });
+    } catch (error) {
+      return res.json({ error });
+    }
+  });
+
+  app.get("/package", async (req, res) => {
+    try {
+      const mypackage = await Package.create({ name: "Simple Package" });
+      const room = await Room.findById("65f76347ce6302dc2cfa8a79");
+      room.package.push(mypackage);
+      await room.save();
     } catch (error) {}
+  });
+
+  app.get("/room", async (req, res) => {
+    try {
+      const date = dayjs().format("DD-MM-YYYY");
+      console.log("Running ... ");
+      const data = addRoom({
+        roomId: "65f76347ce6302dc2cfa8a79",
+        name: "Deluxe Room",
+        packageId: "65f790e8de7e762a9a163b2b",
+        packageName: "Deluxe Package",
+        packageId2: "65f791097cc4234907d396bc",
+        packageName2: "Simple Package",
+      });
+      const res = await axios.post(TRANSACTION, data, fetchOptions);
+      return res.json({ message: "Success" });
+    } catch (error) {
+      return res.json({ error });
+    }
   });
 
   app.get("/get", async (req, res) => {
     try {
-      const response = await axios.post(
-        "https://www.google.com/travel/hotels/uploads/ota/hotel_inv_count_notif",
-        payload,
-        fetchOptions
+      const obj = {};
+      for (let i = 19; i < 31; i++) {
+        obj[i] = {
+          price: 99,
+          availability: true,
+          inventory: 1,
+          _id: generateId(),
+        };
+      }
+      const room = await Room.findByIdAndUpdate(
+        "65f76347ce6302dc2cfa8a79",
+        {
+          $set: { "data.2024.3": obj },
+        },
+        { new: true }
       );
-      console.log(response);
-      return res.json(response.text());
+
+      return res.json({ room });
     } catch (error) {
       console.log(error);
-      return res.json(error);
     }
   });
 
-  const date = new Date();
-  console.log(date);
+  app.get("/available", async (req, res) => {
+    try {
+      const date = dayjs().format("DD-MM-YYYY");
+      console.log("Running ... ");
+      const data = toggleAvailability({
+        roomId: "65f76347ce6302dc2cfa8a79",
+        startDate: date,
+        endDate: dayjs("2024-03-30").format("DD-MM-YYYY"),
+        packageId: "65f791097cc4234907d396bc",
+        // inventory: 1,
+      });
+      const fetchOptions = {
+        headers: {
+          "Content-Type": "application/xml",
+        },
+        method: "POST",
+        body: data,
+      };
+      const response = await fetch(AVAILABILITY, fetchOptions);
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(response, "application/xml");
+      console.log(xmlDoc);
+      return res.json({ message: xmlDoc });
+    } catch (error) {
+      return res.json({ error });
+    }
+  });
 
+  console.log(dayjs("2024-03-30").format("DD-MM-YYYY"));
   connectDb("mongodb://127.0.0.1:27017/Hotel");
   server.listen(3000, () => console.log("Example app listening on port 3000!"));
 }
