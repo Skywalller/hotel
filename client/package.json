@@ -12,6 +12,7 @@
   "dependencies": {
     "@fontsource-variable/oxanium": "^5.0.19",
     "@svgr/rollup": "^8.1.0",
+    "axios": "^1.6.8",
     "dayjs": "^1.11.10",
     "flowbite-react": "^0.7.3",
     "react": "^18.2.0",

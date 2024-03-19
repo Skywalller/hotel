@@ -1,35 +1,35 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import { ReactComponent as EditIcon } from "@/assets/editIcon.svg";
-
-const data = [
-  { _id: 1, date: "18-March-2024", inventory: 1, price: 99, availability: false },
-  { _id: 2, date: "19-March-2024", inventory: 1, price: 99, availability: true },
-  { _id: 3, date: "20-March-2024", inventory: 1, price: 99, availability: true },
-  { _id: 4, date: "21-March-2024", inventory: 1, price: 99, availability: true },
-  { _id: 5, date: "22-March-2024", inventory: 1, price: 99, availability: true },
-  { _id: 6, date: "23-March-2024", inventory: 1, price: 99, availability: true },
-  { _id: 7, date: "24-March-2024", inventory: 1, price: 99, availability: true },
-  { _id: 8, date: "25-March-2024", inventory: 1, price: 99, availability: true },
-  { _id: 9, date: "26-March-2024", inventory: 1, price: 99, availability: true },
-  { _id: 10, date: "27-March-2024", inventory: 1, price: 99, availability: true },
-];
+import axios from "axios";
 
 const Inventory = () => {
+  const [resultedData, setResultedData] = useState(null);
+  const [flag, flagSet] = useState(false);
+  useEffect(() => {
+    async function getHotel() {
+      try {
+        const response = await fetch("http://localhost:3000/v3", {
+          method: "GET",
+        });
+        const data = await response.json();
+        setResultedData(data.rooms[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    getHotel();
+  }, [flag]);
   const [value, setValue] = useState({
     startDate: null,
     endDate: null,
   });
   const ref = useRef(null);
-  const [selectedData, setSelectedData] = useState({
-    date: "18-March-2024",
-    inventory: 1,
-    price: 99,
-    availability: false,
-  });
+  const bulkModalRef = useRef(null);
+  const [selectedData, setSelectedData] = useState(null);
   return (
     <>
-      <BulkModal />
+      <BulkModal ref={bulkModalRef} />
       <Modal data={selectedData} setData={setSelectedData} ref={ref} />
       <div className='w-full h-full p-2'>
         <div className='h-full w-full flex flex-col gap-8'>
@@ -41,7 +41,7 @@ const Inventory = () => {
           <div className='flex flex-col gap-7 w-full h-full'>
             <div className='flex gap-2 justify-end w-full'>
               <button
-                onClick={() => document.getElementById("bulk-ari-modal").showModal()()}
+                onClick={() => bulkModalRef?.current?.showModal()}
                 className='px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors shadow-inner shadow-black/20'
               >
                 Bulk Update
@@ -69,34 +69,35 @@ const Inventory = () => {
                 </tr>
               </thead>
               <tbody className='border border-gray-50 text-sm'>
-                {data.map((item, index) => {
-                  return (
-                    <tr key={index} className='border-b border-b-gray-100'>
-                      <td className='p-4 text-start'>{item.date}</td>
-                      <td className='p-4 text-start'>INR {item.price}</td>
-                      <td className='p-4 text-start'>{item.inventory}</td>
-                      <td className='p-4 text-center'>
-                        <input
-                          type='checkbox'
-                          disabled
-                          checked={item.availability}
-                          className='toggle toggle-success'
-                        />
-                      </td>
-                      <td className='p-4 text-center'>
-                        <button
-                          className='hover:scale-125 transition-transform'
-                          onClick={() => {
-                            setSelectedData(item);
-                            setTimeout(() => ref.current.showModal(), 100);
-                          }}
-                        >
-                          <EditIcon />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {resultedData &&
+                  Object.entries(resultedData?.data[2024][3])?.map(([date, item]) => {
+                    return (
+                      <tr key={date} className='border-b border-b-gray-100'>
+                        <td className='p-4 text-start'>{date} March 2024</td>
+                        <td className='p-4 text-start'>INR {item.price}</td>
+                        <td className='p-4 text-start'>{item.inventory}</td>
+                        <td className='p-4 text-center'>
+                          <input
+                            type='checkbox'
+                            disabled
+                            checked={item.availability}
+                            className='toggle toggle-success'
+                          />
+                        </td>
+                        <td className='p-4 text-center'>
+                          <button
+                            className='hover:scale-125 transition-transform'
+                            onClick={() => {
+                              setSelectedData({ date, item });
+                              setTimeout(() => ref.current.showModal(), 100);
+                            }}
+                          >
+                            <EditIcon />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
@@ -108,62 +109,113 @@ const Inventory = () => {
 
 export default Inventory;
 
-const Modal = React.forwardRef(({ data, setData }, ref) => {
+const Modal = React.forwardRef(({ data, setData, flagSet }, ref) => {
+  const [isLoading, setIsLoading] = useState(false);
+  async function update() {
+    setIsLoading(true);
+    console.log(data);
+    try {
+      const response = await axios.post("http://localhost:3000/v3/update", {
+        data,
+      });
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+    setIsLoading(false);
+  }
+  console.log(data);
   return (
-    <dialog id={data._id} className='modal' ref={ref}>
-      <div className='modal-box bg-white'>
-        <div className='h-full w-full flex flex-col gap-7 py-2'>
-          <div className='flex flex-col gap-1'>
-            <div className='text-xl text-black font-bold'>Edit Data</div>
-            <div className='h-1 bg-black rounded-full w-12'></div>
-          </div>
-
-          <div className='flex flex-col gap-5 w-full'>
-            <div>18-March-2024</div>
-            <div className='flex gap-4 w-full'>
-              <div className='flex flex-col gap-1 flex-1'>
-                <div className='font-semibold'>Price</div>
-                <input
-                  type='text'
-                  className='bg-gray-100 shadow-inner  rounded-lg p-2'
-                  value={data.price}
-                  onChange={(e) => setData((pre) => ({ ...pre, price: e.target.value }))}
-                />
-              </div>
-              <div className='flex flex-col gap-1 flex-1'>
-                <div className='font-semibold'>Inventory</div>
-                <input
-                  type='text'
-                  className='bg-gray-100  shadow-inner rounded-lg p-2'
-                  value={data.inventory}
-                  onChange={(e) => setData((pre) => ({ ...pre, inventory: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className='flex gap-4'>
-              <div className='font-semibold leading-6'>Availability</div>
-              <input
-                type='checkbox'
-                className='toggle toggle-success'
-                checked={data.availability}
-                onChange={(e) => setData((pre) => ({ ...pre, availability: e.target.checked }))}
-              />
+    <dialog id={data?._id} className='modal' ref={ref}>
+      {data && (
+        <div className='modal-box bg-white'>
+          <div className='h-full w-full flex flex-col gap-7 py-2'>
+            <div className='flex flex-col gap-1'>
+              <div className='text-xl text-black font-bold'>Edit Data</div>
+              <div className='h-1 bg-black rounded-full w-12'></div>
             </div>
 
-            <div className='justify-end flex gap-1 modal-action'>
-              <button
-                className='shadow-inner border border-gray-200 rounded-lg text-black px-3 py-2'
-                onClick={() => ref.current.close()}
-              >
-                Cancel
-              </button>
-              <button className='shadow-inner border bg-primary hover:bg-primary/80 transition-colors  rounded-lg text-white px-3 py-2'>
-                Update
-              </button>
+            <div className='flex flex-col gap-5 w-full'>
+              <div>{data.date} March 2024</div>
+              <div className='flex gap-4 w-full'>
+                <div className='flex flex-col gap-1 flex-1'>
+                  <div className='font-semibold'>Price</div>
+                  <input
+                    type='text'
+                    className='bg-gray-100 shadow-inner  rounded-lg p-2'
+                    value={data.item.price}
+                    onChange={(e) =>
+                      setData((pre) => ({
+                        ...pre,
+                        item: {
+                          ...pre.item,
+                          price: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+                <div className='flex flex-col gap-1 flex-1'>
+                  <div className='font-semibold'>Inventory</div>
+                  <input
+                    type='text'
+                    className='bg-gray-100  shadow-inner rounded-lg p-2'
+                    value={data.item.inventory}
+                    onChange={(e) =>
+                      setData((pre) => ({
+                        ...pre,
+                        item: { ...pre.item, inventory: e.target.value },
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className='flex gap-4'>
+                <div className='font-semibold leading-6'>Availability</div>
+                <input
+                  type='checkbox'
+                  className='toggle toggle-success'
+                  checked={data.item.availability}
+                  onChange={(e) =>
+                    setData((pre) => ({
+                      ...pre,
+                      item: {
+                        ...pre.item,
+                        availability: e.target.checked,
+                      },
+                    }))
+                  }
+                />
+              </div>
+
+              <div className='justify-end flex gap-1 modal-action'>
+                <button
+                  className='shadow-inner border border-gray-200 rounded-lg text-black px-3 py-2'
+                  onClick={(e) => {
+                    e.preventDefault();
+                    ref.current.close();
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    update();
+                    flagSet((pre) => !pre);
+                    ref.current.close();
+                  }}
+                  disabled={isLoading}
+                  className={`shadow-inner border bg-primary hover:bg-primary/80 transition-colors  rounded-lg text-white px-3 py-2 box-center w-20`}
+                >
+                  {isLoading && <span className='loading'></span>}
+                  {isLoading ? "" : "Update"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       <form method='dialog' className='modal-backdrop'>
         <button>close</button>
       </form>
@@ -171,11 +223,11 @@ const Modal = React.forwardRef(({ data, setData }, ref) => {
   );
 });
 
-const BulkModal = () => {
+const BulkModal = React.forwardRef(({}, ref) => {
   const [data, setData] = useState({ inventory: 0, availability: false, price: 0 });
   const [date, setDate] = useState({ startDate: null, endDate: null });
   return (
-    <dialog id='bulk-ari-modal' className='modal'>
+    <dialog autoFocus id='bulk-ari-modal' ref={ref} className='modal'>
       <div className='modal-box bg-white h-[650px] max-w-[750px]'>
         <div className='h-full w-full flex flex-col gap-10 py-4'>
           <div className='flex flex-col gap-1'>
@@ -183,7 +235,7 @@ const BulkModal = () => {
             <div className='h-1 bg-black rounded-full w-16'></div>
           </div>
 
-          <div className='flex flex-col gap-7 w-full h-full'>
+          <form className='flex flex-col gap-7 w-full h-full'>
             <Datepicker
               minDate={new Date()}
               value={date}
@@ -229,7 +281,10 @@ const BulkModal = () => {
             <div className='justify-end flex gap-1 modal-action mt-auto'>
               <button
                 className='shadow-inner border border-gray-200 rounded-lg text-black px-3 py-2'
-                onClick={() => document.getElementById("bulk-ari-modal").close()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  ref?.current?.close();
+                }}
               >
                 Cancel
               </button>
@@ -237,7 +292,7 @@ const BulkModal = () => {
                 Update
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
       <form method='dialog' className='modal-backdrop'>
@@ -245,4 +300,4 @@ const BulkModal = () => {
       </form>
     </dialog>
   );
-};
+});

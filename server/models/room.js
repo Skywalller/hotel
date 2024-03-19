@@ -19,6 +19,7 @@ const roomSchema = new mongoose.Schema(
       },
     },
     package: [{ type: mongoose.Schema.Types.ObjectId, ref: "Package" }],
+    hotel: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel" },
   },
   { timestamps: true, collection: "Room" }
 );

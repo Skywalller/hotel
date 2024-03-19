@@ -111,6 +111,7 @@ const addRate = ({
   amountBeforeTax = 99,
   packageId,
 }) => {
+  console.log(amountBeforeTax);
   return `<?xml version="1.0" encoding="UTF-8"?>
 <OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05"
                             EchoToken="${generateId()}"
